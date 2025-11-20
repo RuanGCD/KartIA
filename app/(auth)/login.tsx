@@ -6,15 +6,18 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   StyleSheet,
+  Image,
 } from "react-native";
 import { useRouter, Link } from "expo-router";
 import { useAuth } from "../../Contexts/authContext";
+import { Ionicons } from "@expo/vector-icons";
 
 export default function Login() {
   const router = useRouter();
   const { login, loading } = useAuth();
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
+  const [mostrarSenha, setMostrarSenha] = useState(false);
   const [erro, setErro] = useState("");
 
   const handleLogin = async () => {
@@ -38,6 +41,13 @@ export default function Login() {
     <View style={styles.container}>
       <Text style={styles.logo}>KartIA</Text>
 
+      {/* LOGO EMBAIXO DO TÍTULO */}
+      <Image
+        source={require("../../assets/logo.png")}
+        style={styles.logoImage}
+        resizeMode="contain"
+      />
+
       {erro ? <Text style={styles.error}>{erro}</Text> : null}
 
       <TextInput
@@ -49,14 +59,29 @@ export default function Login() {
         value={email}
         onChangeText={setEmail}
       />
-      <TextInput
-        placeholder="Senha"
-        placeholderTextColor="#888"
-        style={styles.input}
-        secureTextEntry
-        value={senha}
-        onChangeText={setSenha}
-      />
+
+      {/* CAMPO DE SENHA COM ÍCONE */}
+      <View style={styles.passwordContainer}>
+        <TextInput
+          placeholder="Senha"
+          placeholderTextColor="#888"
+          style={[styles.input, { flex: 1, marginBottom: 0, borderWidth: 0 }]}
+          secureTextEntry={!mostrarSenha}
+          value={senha}
+          onChangeText={setSenha}
+        />
+
+        <TouchableOpacity
+          onPress={() => setMostrarSenha(!mostrarSenha)}
+          style={styles.eyeButton}
+        >
+          <Ionicons
+            name={mostrarSenha ? "eye-off" : "eye"}
+            size={24}
+            color="#FFD700"
+          />
+        </TouchableOpacity>
+      </View>
 
       <TouchableOpacity style={styles.button} onPress={handleLogin}>
         {loading ? (
@@ -66,7 +91,6 @@ export default function Login() {
         )}
       </TouchableOpacity>
 
-      {/* 🔹 Link para registro */}
       <Text style={styles.registerText}>
         Não tem conta?{" "}
         <Link href="/(auth)/register" style={styles.link}>
@@ -89,7 +113,12 @@ const styles = StyleSheet.create({
     fontSize: 32,
     color: "#FFD700",
     fontWeight: "bold",
-    marginBottom: 40,
+    marginBottom: 10,
+  },
+  logoImage: {
+    width: 140,
+    height: 140,
+    marginBottom: 30,
   },
   input: {
     width: "100%",
@@ -99,6 +128,20 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 10,
     marginBottom: 10,
+  },
+  passwordContainer: {
+    flexDirection: "row",
+    width: "100%",
+    alignItems: "center",
+    borderColor: "#FFD700",
+    borderWidth: 1,
+    borderRadius: 8,
+    marginBottom: 10,
+    paddingRight: 8,
+  },
+  eyeButton: {
+    paddingHorizontal: 6,
+    paddingVertical: 6,
   },
   button: {
     backgroundColor: "#FFD700",

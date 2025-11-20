@@ -12,6 +12,7 @@ import { Link } from "expo-router";
 import { account, databases } from "../../utils/appwrite";
 import { ID } from "appwrite";
 import { useAuth } from "../../Contexts/authContext";
+import { Ionicons } from "@expo/vector-icons";
 
 const DATABASE_ID = "68f65dd60011cc69ba07";
 const COLLECTION_ID = "users";
@@ -22,6 +23,7 @@ export default function Register() {
   const [idade, setIdade] = useState("");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
+  const [mostrarSenha, setMostrarSenha] = useState(false);
 
   const handleRegister = async () => {
     if (!nome || !idade || !email || !senha) {
@@ -80,14 +82,28 @@ export default function Register() {
         onChangeText={setEmail}
       />
 
-      <TextInput
-        placeholder="Senha"
-        placeholderTextColor="#888"
-        style={styles.input}
-        secureTextEntry
-        value={senha}
-        onChangeText={setSenha}
-      />
+      {/* 🔹 CAMPO SENHA COM ÍCONE */}
+      <View style={styles.passwordContainer}>
+        <TextInput
+          placeholder="Senha"
+          placeholderTextColor="#888"
+          style={[styles.input, { flex: 1, marginBottom: 0, borderWidth: 0 }]}
+          secureTextEntry={!mostrarSenha}
+          value={senha}
+          onChangeText={setSenha}
+        />
+
+        <TouchableOpacity
+          onPress={() => setMostrarSenha(!mostrarSenha)}
+          style={styles.eyeButton}
+        >
+          <Ionicons
+            name={mostrarSenha ? "eye-off" : "eye"}
+            size={24}
+            color="#FFD700"
+          />
+        </TouchableOpacity>
+      </View>
 
       <TouchableOpacity
         style={styles.button}
@@ -123,6 +139,23 @@ const styles = StyleSheet.create({
     padding: 10,
     marginBottom: 10,
   },
+
+  /* 🔹 Igual ao login */
+  passwordContainer: {
+    flexDirection: "row",
+    width: "80%",
+    alignItems: "center",
+    borderColor: "#FFD700",
+    borderWidth: 1,
+    borderRadius: 8,
+    marginBottom: 10,
+    paddingRight: 8,
+  },
+  eyeButton: {
+    paddingHorizontal: 6,
+    paddingVertical: 6,
+  },
+
   button: {
     backgroundColor: "#FFD700",
     paddingVertical: 10,
