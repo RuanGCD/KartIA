@@ -1,9 +1,17 @@
-import React, { useEffect, useState } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from "react-native";
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ActivityIndicator,
+} from "react-native";
+
 import { useRouter } from "expo-router";
+import { useFocusEffect } from "@react-navigation/native"; // 🔥 IMPORTANTE
 import { databases, DB_ID, USERS_COLLECTION_ID } from "../../utils/appwrite";
 import { Models } from "appwrite";
-import { useAuth } from "../../hooks/useAuth"; //  importa o contexto
+import { useAuth } from "../../hooks/useAuth";
 
 interface UserData extends Models.Document {
   nome: string;
@@ -13,34 +21,38 @@ interface UserData extends Models.Document {
 }
 
 export default function Profile() {
-  const { user, logout } = useAuth(); //  vem do AuthProvider
+  const { user, logout } = useAuth();
   const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  useEffect(() => {
-    const loadUserData = async () => {
-      if (!user) return;
-      try {
-        const document = await databases.getDocument<UserData>(
-          DB_ID,
-          USERS_COLLECTION_ID,
-          user.$id
-        );
-        setUserData(document);
-      } catch (err) {
-        console.error("Erro ao carregar dados do usuário:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
+  // 🔥 Atualiza sempre que a tela é focada
+  useFocusEffect(
+    React.useCallback(() => {
+      const loadUserData = async () => {
+        if (!user) return;
+        try {
+          setLoading(true);
+          const document = await databases.getDocument<UserData>(
+            DB_ID,
+            USERS_COLLECTION_ID,
+            user.$id
+          );
+          setUserData(document);
+        } catch (err) {
+          console.error("Erro ao carregar dados do usuário:", err);
+        } finally {
+          setLoading(false);
+        }
+      };
 
-    loadUserData();
-  }, [user]);
+      loadUserData();
+    }, [user])
+  );
 
   const handleLogout = async () => {
-    await logout(); // usa o contexto
-    router.replace("/(auth)/login"); //  volta ao login
+    await logout();
+    router.replace("/(auth)/login");
   };
 
   if (loading) {
