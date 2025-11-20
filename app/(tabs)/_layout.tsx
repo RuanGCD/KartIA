@@ -16,6 +16,8 @@ export default function TabsLayout() {
         headerShown: false,
       }}
     >
+
+      {/* ---------------- TABS VISÍVEIS ---------------- */}
       <Tabs.Screen
         name="campeonatos"
         options={{
@@ -25,6 +27,7 @@ export default function TabsLayout() {
           ),
         }}
       />
+
       <Tabs.Screen
         name="armazem"
         options={{
@@ -34,6 +37,7 @@ export default function TabsLayout() {
           ),
         }}
       />
+
       <Tabs.Screen
         name="profile"
         options={{
@@ -43,6 +47,15 @@ export default function TabsLayout() {
           ),
         }}
       />
+
+      {/* ----------- TELAS QUE NÃO DEVEM VIRAR TAB ----------- */}
+      <Tabs.Screen
+        name="campeonato/[id]"
+        options={{
+          href: null,
+        }}
+      />
+
     </Tabs>
   );
 }
