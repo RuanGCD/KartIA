@@ -1,11 +1,13 @@
 import React, { useEffect } from "react";
 import { Slot, useRouter, useSegments } from "expo-router";
 import { ActivityIndicator, View } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+
 import { AuthProvider } from "../Contexts/authContext";
-import { useAuth } from "../hooks/useAuth"; 
+import { useAuth } from "../hooks/useAuth";
 
 function LayoutContent() {
-  const { user, loading } = useAuth(); 
+  const { user, loading } = useAuth();
   const segments = useSegments();
   const router = useRouter();
 
@@ -41,8 +43,10 @@ function LayoutContent() {
 
 export default function Layout() {
   return (
-    <AuthProvider>
-      <LayoutContent />
-    </AuthProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <AuthProvider>
+        <LayoutContent />
+      </AuthProvider>
+    </GestureHandlerRootView>
   );
 }
