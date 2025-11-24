@@ -17,6 +17,7 @@ import { ResizeMode, Video } from "expo-av";
 export default function VideoSection() {
   const [videos, setVideos] = useState<string[]>([]);
   const [thumbnails, setThumbnails] = useState<Record<string, string>>({});
+  const [playingVideo, setPlayingVideo] = useState<string | null>(null);
 
   const hiddenVideoRef = useRef<Video>(null);
 
@@ -121,18 +122,24 @@ export default function VideoSection() {
     ]);
   }
 
+  function playVideo(uri: string) {
+    setPlayingVideo(uri);
+  }
+
   const renderVideoCard = ({ item }: { item: string }) => {
     const thumb = thumbnails[item];
 
     return (
       <View style={styles.card}>
-        {thumb ? (
-          <Image source={{ uri: thumb }} style={styles.thumbnail} />
-        ) : (
-          <View style={[styles.thumbnail, styles.thumbnailPlaceholder]}>
-            <Text style={{ color: "#888" }}>Carregando...</Text>
-          </View>
-        )}
+        <TouchableOpacity onPress={() => playVideo(item)}>
+          {thumb ? (
+            <Image source={{ uri: thumb }} style={styles.thumbnail} />
+          ) : (
+            <View style={[styles.thumbnail, styles.thumbnailPlaceholder]}>
+              <Text style={{ color: "#888" }}>Carregando...</Text>
+            </View>
+          )}
+        </TouchableOpacity>
 
         <View style={styles.cardFooter}>
           <TouchableOpacity
@@ -150,6 +157,17 @@ export default function VideoSection() {
     <View style={styles.container}>
       <Text style={styles.label}>Vídeos</Text>
 
+      {playingVideo && (
+        <Video
+          source={{ uri: playingVideo }}
+          style={{ width: 320, height: 200, backgroundColor: "black" }}
+          useNativeControls
+          resizeMode={ResizeMode.CONTAIN}
+          shouldPlay
+          onError={(err) => console.log("Erro vídeo:", err)}
+        />
+      )}
+
       <Video
         ref={hiddenVideoRef}
         style={{ width: 0, height: 0, opacity: 0 }}
@@ -166,7 +184,6 @@ export default function VideoSection() {
           </Text>
         )}
 
-        {/* SCROLL CORRIGIDO AQUI */}
         <FlatList
           data={videos}
           numColumns={2}
@@ -209,11 +226,9 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginTop: 10,
   },
-
   row: {
     justifyContent: "space-between",
   },
-
   card: {
     backgroundColor: "#111",
     borderWidth: 1,
