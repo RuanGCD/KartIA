@@ -118,7 +118,7 @@ export default function Campeonatos() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#0b0b0b", padding: 20 },
-  title: { color: "#FFD700", fontSize: 22, fontWeight: "bold", marginBottom: 15 },
+  title: { color: "#FFD700", fontSize: 22, fontWeight: "bold", marginBottom: 15, marginTop: 30 },
   input: {
     backgroundColor: "#1a1a1a",
     color: "#fff",

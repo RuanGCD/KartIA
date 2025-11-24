@@ -66,23 +66,21 @@ export async function joinChampionship(code: string, userId: string) {
     players.push(userId);
     scores[userId] = 0;
 
-    // Atualiza o documento com permissões abertas
     await databases.updateDocument(
-  DATABASE_ID,
-  COLLECTION_ID,
-  champ.$id,
-  {
-    players,
-    scores: JSON.stringify(scores),
-    permissions: [
-      Permission.read(Role.any()),
-      Permission.update(Role.any()),
-      Permission.delete(Role.any()),
-      Permission.write(Role.any()),
-    ],
-  }
-);
-
+      DATABASE_ID,
+      COLLECTION_ID,
+      champ.$id,
+      {
+        players,
+        scores: JSON.stringify(scores),
+      },
+      [
+        Permission.read(Role.any()),
+        Permission.update(Role.any()),
+        Permission.delete(Role.any()),
+        Permission.write(Role.any()),
+      ]
+    );
 
     return champ;
   } catch (err) {
