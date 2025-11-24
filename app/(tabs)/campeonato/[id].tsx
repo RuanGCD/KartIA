@@ -29,6 +29,11 @@ export default function CampeonatoScreen() {
 
   // 🔹 Carregar campeonato e nomes
   const carregar = async () => {
+    // Resetar estado para evitar dados antigos
+    setCampeonato(null);
+    setScores({});
+    setNomes({});
+
     try {
       const doc = await databases.getDocument(DATABASE_ID, CHAMP_COLLECTION, String(id));
       setCampeonato(doc);
@@ -56,12 +61,14 @@ export default function CampeonatoScreen() {
     }
   };
 
+  // 🔹 UseEffect depende do id
   useEffect(() => {
-    carregar();
-  }, []);
+    if (id) carregar();
+  }, [id]);
 
   // 🔹 Abrir o modal de corrida
   const abrirCorrida = () => {
+    if (!campeonato) return;
     const inicial: { [key: string]: string } = {};
     Object.keys(scores).forEach((id) => (inicial[id] = "naoCorreu"));
     setResultados(inicial);
@@ -70,6 +77,8 @@ export default function CampeonatoScreen() {
 
   // 🔹 Salvar os resultados da corrida
   const salvarCorrida = async () => {
+    if (!campeonato) return;
+
     try {
       const newScores = { ...scores };
       const atualizacoesUsuarios: Promise<void>[] = [];
@@ -133,7 +142,7 @@ export default function CampeonatoScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>{campeonato?.nome || "Campeonato"}</Text>
+      <Text style={styles.title}>{campeonato?.nome || "Carregando..."}</Text>
 
       <FlatList
         data={sorted}
@@ -161,46 +170,48 @@ export default function CampeonatoScreen() {
       </TouchableOpacity>
 
       {/* 🔹 Modal da Corrida */}
-      <Modal visible={modalVisible} animationType="slide" transparent={true}>
-        <View style={styles.modalContainer}>
-          <View style={styles.modalBox}>
-            <Text style={styles.modalTitle}>Registrar Corrida</Text>
-            <FlatList
-              data={Object.keys(nomes)}
-              keyExtractor={(id) => id}
-              renderItem={({ item }) => (
-                <View style={styles.pickerRow}>
-                  <Text style={styles.pickerLabel}>{nomes[item]}</Text>
-                  <Picker
-                    selectedValue={resultados[item]}
-                    style={styles.picker}
-                    dropdownIconColor="#FFD700"
-                    onValueChange={(val) =>
-                      setResultados((prev) => ({ ...prev, [item]: val }))
-                    }
-                  >
-                    <Picker.Item label="Não correu" value="naoCorreu" />
-                    <Picker.Item label="Não terminou" value="naoTerminou" />
-                    {[...Array(Object.keys(nomes).length)].map((_, i) => (
-                      <Picker.Item key={i} label={`${i + 1}º Lugar`} value={`${i + 1}`} />
-                    ))}
-                  </Picker>
-                </View>
-              )}
-            />
+      {campeonato && (
+        <Modal visible={modalVisible} animationType="slide" transparent={true}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalBox}>
+              <Text style={styles.modalTitle}>Registrar Corrida</Text>
+              <FlatList
+                data={Object.keys(nomes)}
+                keyExtractor={(id) => id}
+                renderItem={({ item }) => (
+                  <View style={styles.pickerRow}>
+                    <Text style={styles.pickerLabel}>{nomes[item]}</Text>
+                    <Picker
+                      selectedValue={resultados[item]}
+                      style={styles.picker}
+                      dropdownIconColor="#FFD700"
+                      onValueChange={(val) =>
+                        setResultados((prev) => ({ ...prev, [item]: val }))
+                      }
+                    >
+                      <Picker.Item label="Não correu" value="naoCorreu" />
+                      <Picker.Item label="Não terminou" value="naoTerminou" />
+                      {[...Array(Object.keys(nomes).length)].map((_, i) => (
+                        <Picker.Item key={i} label={`${i + 1}º Lugar`} value={`${i + 1}`} />
+                      ))}
+                    </Picker>
+                  </View>
+                )}
+              />
 
-            <TouchableOpacity style={styles.button} onPress={salvarCorrida}>
-              <Text style={styles.buttonText}>Salvar Corrida</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.button, { backgroundColor: "#333", marginTop: 10 }]}
-              onPress={() => setModalVisible(false)}
-            >
-              <Text style={[styles.buttonText, { color: "#FFD700" }]}>Cancelar</Text>
-            </TouchableOpacity>
+              <TouchableOpacity style={styles.button} onPress={salvarCorrida}>
+                <Text style={styles.buttonText}>Salvar Corrida</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.button, { backgroundColor: "#333", marginTop: 10 }]}
+                onPress={() => setModalVisible(false)}
+              >
+                <Text style={[styles.buttonText, { color: "#FFD700" }]}>Cancelar</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
-      </Modal>
+        </Modal>
+      )}
     </View>
   );
 }
