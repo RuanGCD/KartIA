@@ -3,6 +3,8 @@ import { Slot, useRouter, useSegments } from "expo-router";
 import { ActivityIndicator, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
+import Toast from "react-native-toast-message";
+
 import { AuthProvider } from "../Contexts/authContext";
 import { useAuth } from "../hooks/useAuth";
 
@@ -47,6 +49,9 @@ export default function Layout() {
       <AuthProvider>
         <LayoutContent />
       </AuthProvider>
+
+      {/* ‼️ ATENÇÃO — TOAST PRECISA FICAR AQUI NO ROOT */}
+      <Toast />
     </GestureHandlerRootView>
   );
 }
