@@ -7,22 +7,31 @@ import {
   ActivityIndicator,
   StyleSheet,
   Image,
+  Alert,
 } from "react-native";
 import { useRouter, Link } from "expo-router";
 import { useAuth } from "../../Contexts/authContext";
 import { Ionicons } from "@expo/vector-icons";
+import Toast from "react-native-toast-message";
+
 
 export default function Login() {
   const router = useRouter();
   const { login, loading } = useAuth();
+
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [mostrarSenha, setMostrarSenha] = useState(false);
   const [erro, setErro] = useState("");
 
   const handleLogin = async () => {
-    if (!email || !senha) {
-      setErro("Preencha todos os campos");
+    if (!email) {
+      setErro("Digite seu email.");
+      return;
+    }
+
+    if (!senha) {
+      setErro("Digite sua senha.");
       return;
     }
 
@@ -32,8 +41,17 @@ export default function Login() {
       await login(email, senha);
       router.replace("/(tabs)/profile");
     } catch (e: any) {
-      console.error("Erro ao logar:", e);
-      setErro("Email ou senha incorretos.");
+      const msg = e?.message?.toString() || "";
+
+      if (msg.includes("between 8 and 256")) {
+        Alert.alert("Senha inválida", "A senha deve conter pelo menos 8 caracteres.");
+      } else if (msg.includes("Invalid credentials")) {
+        Alert.alert("Erro ao entrar", "Email ou senha incorretos.");
+      } else if (msg.includes("User not found")) {
+        Alert.alert("Conta não encontrada", "Nenhuma conta foi encontrada com este email.");
+      } else {
+        Alert.alert("Erro", "Não foi possível fazer login. Tente novamente.");
+      }
     }
   };
 
@@ -41,7 +59,6 @@ export default function Login() {
     <View style={styles.container}>
       <Text style={styles.logo}>KartIA</Text>
 
-      {/* LOGO EMBAIXO DO TÍTULO */}
       <Image
         source={require("../../assets/logo.png")}
         style={styles.logoImage}
@@ -60,7 +77,6 @@ export default function Login() {
         onChangeText={setEmail}
       />
 
-      {/* CAMPO DE SENHA COM ÍCONE */}
       <View style={styles.passwordContainer}>
         <TextInput
           placeholder="Senha"
@@ -83,7 +99,11 @@ export default function Login() {
         </TouchableOpacity>
       </View>
 
-      <TouchableOpacity style={styles.button} onPress={handleLogin}>
+      <TouchableOpacity
+        style={[styles.button, (!email || !senha) && styles.buttonDisabled]}
+        disabled={!email || !senha}
+        onPress={handleLogin}
+      >
         {loading ? (
           <ActivityIndicator color="#000" />
         ) : (
@@ -150,13 +170,24 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginTop: 10,
   },
+  buttonDisabled: {
+    opacity: 0.5,
+  },
   buttonText: {
     color: "#000",
     fontWeight: "bold",
   },
   error: {
-    color: "red",
+    backgroundColor: "#330000",
+    borderColor: "#FF4C4C",
+    borderWidth: 1,
+    color: "#FF6B6B",
+    padding: 10,
+    width: "100%",
+    borderRadius: 8,
+    textAlign: "center",
     marginBottom: 10,
+    fontWeight: "500",
   },
   registerText: {
     color: "#fff",
