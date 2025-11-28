@@ -12,6 +12,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { databases } from "../../../utils/appwrite";
 import { useAuth } from "../../../Contexts/authContext";
 import { Picker } from "@react-native-picker/picker";
+import { leaveChampionship, deleteChampionship } from "../../../utils/championships";
 
 const DATABASE_ID = "68f65dd60011cc69ba07";
 const CHAMP_COLLECTION = "championships";
@@ -29,7 +30,6 @@ export default function CampeonatoScreen() {
 
   // 🔹 Carregar campeonato e nomes
   const carregar = async () => {
-    // Resetar estado para evitar dados antigos
     setCampeonato(null);
     setScores({});
     setNomes({});
@@ -61,7 +61,6 @@ export default function CampeonatoScreen() {
     }
   };
 
-  // 🔹 UseEffect depende do id
   useEffect(() => {
     if (id) carregar();
   }, [id]);
@@ -75,7 +74,7 @@ export default function CampeonatoScreen() {
     setModalVisible(true);
   };
 
-  // 🔹 Salvar os resultados da corrida
+  // 🔹 Salvar os resultados
   const salvarCorrida = async () => {
     if (!campeonato) return;
 
@@ -83,16 +82,14 @@ export default function CampeonatoScreen() {
       const newScores = { ...scores };
       const atualizacoesUsuarios: Promise<void>[] = [];
 
-      // 🔸 Aplicar pontuação
       const classificados = Object.entries(resultados)
         .filter(([_, pos]) => pos !== "naoCorreu" && pos !== "naoTerminou")
         .sort((a, b) => parseInt(a[1]) - parseInt(b[1]));
 
       classificados.forEach(([id, pos], i) => {
-        const pontos = 10 - i * 2; // 10, 8, 6...
+        const pontos = 10 - i * 2;
         newScores[id] = (newScores[id] || 0) + Math.max(pontos, 0);
 
-        // Atualiza corridas e vitórias
         atualizacoesUsuarios.push(
           (async () => {
             const userDoc = await databases.getDocument(DATABASE_ID, USER_COLLECTION, id);
@@ -107,7 +104,6 @@ export default function CampeonatoScreen() {
         );
       });
 
-      // 🔸 Jogadores que não correram ou não terminaram
       Object.entries(resultados)
         .filter(([_, pos]) => pos === "naoCorreu" || pos === "naoTerminou")
         .forEach(([id]) => {
@@ -123,7 +119,6 @@ export default function CampeonatoScreen() {
 
       await Promise.all(atualizacoesUsuarios);
 
-      // 🔸 Atualizar o campeonato
       await databases.updateDocument(DATABASE_ID, CHAMP_COLLECTION, campeonato.$id, {
         scores: JSON.stringify(newScores),
       });
@@ -136,6 +131,58 @@ export default function CampeonatoScreen() {
       console.error(e);
       Alert.alert("Erro", "Falha ao registrar corrida.");
     }
+  };
+
+  // 🚪 Função para sair
+  const sairDoCampeonato = async () => {
+    if (!campeonato || !user) return;
+
+    Alert.alert(
+      "Sair do Campeonato",
+      "Tem certeza que deseja sair do campeonato?",
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Sair",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await leaveChampionship(campeonato.$id, user.$id);
+              Alert.alert("Você saiu do campeonato.");
+              router.back();
+            } catch (err: any) {
+              Alert.alert("Erro", err.message || "Falha ao sair do campeonato.");
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  // ❌ Excluir campeonato (somente dono)
+  const excluirCampeonato = async () => {
+    if (!campeonato || !user) return;
+
+    Alert.alert(
+      "Excluir Campeonato",
+      "Tem certeza? Esta ação não pode ser desfeita.",
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Excluir",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await deleteChampionship(campeonato.$id, user.$id);
+              Alert.alert("Campeonato excluído.");
+              router.back();
+            } catch (err: any) {
+              Alert.alert("Erro", err.message || "Falha ao excluir campeonato.");
+            }
+          },
+        },
+      ]
+    );
   };
 
   const sorted = Object.entries(scores).sort((a, b) => b[1] - a[1]);
@@ -162,12 +209,36 @@ export default function CampeonatoScreen() {
         </TouchableOpacity>
       )}
 
+      {/* ❌ Excluir campeonato — apenas dono */}
+      {user?.$id === campeonato?.ownerId && (
+        <TouchableOpacity
+          style={[styles.button, { backgroundColor: "#aa0000", marginTop: 10 }]}
+          onPress={excluirCampeonato}
+        >
+          <Text style={[styles.buttonText, { color: "#fff" }]}>
+            Excluir Campeonato
+          </Text>
+        </TouchableOpacity>
+      )}
+
       <TouchableOpacity
         style={[styles.button, { backgroundColor: "#333", marginTop: 10 }]}
         onPress={() => router.back()}
       >
         <Text style={[styles.buttonText, { color: "#FFD700" }]}>Voltar</Text>
       </TouchableOpacity>
+
+      {/* 🚪 BOTÃO DE SAIR */}
+      {user?.$id !== campeonato?.ownerId && (
+        <TouchableOpacity
+          style={[styles.button, { backgroundColor: "#aa0000", marginTop: 10 }]}
+          onPress={sairDoCampeonato}
+        >
+          <Text style={[styles.buttonText, { color: "#fff" }]}>
+            Sair do Campeonato
+          </Text>
+        </TouchableOpacity>
+      )}
 
       {/* 🔹 Modal da Corrida */}
       {campeonato && (
@@ -206,7 +277,9 @@ export default function CampeonatoScreen() {
                 style={[styles.button, { backgroundColor: "#333", marginTop: 10 }]}
                 onPress={() => setModalVisible(false)}
               >
-                <Text style={[styles.buttonText, { color: "#FFD700" }]}>Cancelar</Text>
+                <Text style={[styles.buttonText, { color: "#FFD700" }]}>
+                  Cancelar
+                </Text>
               </TouchableOpacity>
             </View>
           </View>

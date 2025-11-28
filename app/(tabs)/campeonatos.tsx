@@ -8,7 +8,7 @@ import {
   StyleSheet,
   Alert,
 } from "react-native";
-import { useRouter } from "expo-router";
+import { useRouter, useFocusEffect } from "expo-router";
 import { useAuth } from "../../Contexts/authContext";
 import { createChampionship, getChampionshipsByUser, joinChampionship } from "../../utils/championships";
 
@@ -33,6 +33,12 @@ export default function Campeonatos() {
   useEffect(() => {
     loadChampionships();
   }, [user]);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      loadChampionships();
+    }, [])
+  );
 
   const handleCreate = async () => {
     if (!name.trim() || !user) return;
@@ -107,8 +113,8 @@ export default function Campeonatos() {
             style={styles.champCard}
             onPress={() => router.push(`/(tabs)/campeonato/${item.$id}` as any)}
           >
-          <Text style={styles.champName}>{item.nome}</Text>
-          <Text style={styles.champCode}>Código: {item.code}</Text>
+            <Text style={styles.champName}>{item.nome}</Text>
+            <Text style={styles.champCode}>Código: {item.code}</Text>
           </TouchableOpacity>
         )}
       />

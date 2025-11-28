@@ -7,7 +7,7 @@ const COLLECTION_ID = "championships";
 function generateCode(length = 6): string {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   let result = "";
-  for (let i = 0; i < length; i++) result += chars.charAt(Math.floor(Math.random() * chars.length));
+  for (let i = 0; i < length; i++) result += chars.charAt(Math.floor(Math.random() * Math.random() * chars.length));
   return result;
 }
 
@@ -27,10 +27,10 @@ export async function createChampionship(nome: string, ownerId: string) {
         players: [ownerId],
       },
       [
-        Permission.read(Role.any()),      // todos podem ler
-        Permission.update(Role.any()),    // todos podem atualizar
-        Permission.delete(Role.any()),    // todos podem deletar
-        Permission.write(Role.any()),     // todos podem escrever
+        Permission.read(Role.any()),
+        Permission.update(Role.any()),
+        Permission.delete(Role.any()),
+        Permission.write(Role.any()),
       ]
     );
 
@@ -48,8 +48,6 @@ export async function joinChampionship(code: string, userId: string) {
       Query.equal("code", code.trim().toUpperCase()),
     ]);
 
-    console.log("Resultado da busca:", res.documents);
-
     if (!res.documents || res.total === 0) {
       throw new Error("Campeonato não encontrado.");
     }
@@ -60,7 +58,7 @@ export async function joinChampionship(code: string, userId: string) {
     const players = Array.isArray(champ.players) ? champ.players : [];
 
     if (players.includes(userId)) {
-      return champ; // já está participando
+      return champ;
     }
 
     players.push(userId);
@@ -85,6 +83,56 @@ export async function joinChampionship(code: string, userId: string) {
     return champ;
   } catch (err) {
     console.error("Erro ao entrar no campeonato:", err);
+    throw err;
+  }
+}
+
+// 🚪 Sair do campeonato
+export async function leaveChampionship(champId: string, userId: string) {
+  try {
+    const champ = await databases.getDocument(DATABASE_ID, COLLECTION_ID, champId);
+
+    if (champ.ownerId === userId) {
+      throw new Error("O dono do campeonato não pode sair.");
+    }
+
+    const scores = champ.scores ? JSON.parse(champ.scores) : {};
+    const players = Array.isArray(champ.players) ? champ.players : [];
+
+    const newPlayers = players.filter((p: string) => p !== userId);
+    delete scores[userId];
+
+    await databases.updateDocument(
+      DATABASE_ID,
+      COLLECTION_ID,
+      champId,
+      {
+        players: newPlayers,
+        scores: JSON.stringify(scores),
+      }
+    );
+
+    return true;
+  } catch (err) {
+    console.error("Erro ao sair do campeonato:", err);
+    throw err;
+  }
+}
+
+// ❌ Excluir campeonato (somente o dono)
+export async function deleteChampionship(champId: string, userId: string) {
+  try {
+    const champ = await databases.getDocument(DATABASE_ID, COLLECTION_ID, champId);
+
+    if (champ.ownerId !== userId) {
+      throw new Error("Apenas o dono pode excluir este campeonato.");
+    }
+
+    await databases.deleteDocument(DATABASE_ID, COLLECTION_ID, champId);
+
+    return true;
+  } catch (err) {
+    console.error("Erro ao excluir campeonato:", err);
     throw err;
   }
 }
