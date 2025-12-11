@@ -86,13 +86,13 @@ export default function NoteSection() {
 }
 
 const styles = StyleSheet.create({
-  /* 🔥 NÃO usa flex: 1 aqui — isso quebrava o layout no carrossel */
+  
   container: {
     width: "100%",
     alignItems: "center",
   },
 
-  /* 🔥 CAIXA IGUAL A ANTERIOR + minHeight evita colapso dentro do ScrollView horizontal */
+  
   box: {
     width: "90%",
     minHeight: 200,

@@ -17,8 +17,8 @@ import Svg, { Rect, G, Text as SvgText } from "react-native-svg";
 
 type Lap = {
   id: string;
-  ms: number; // time in milliseconds
-  label: string; // original string
+  ms: number; 
+  label: string; 
   createdAt: number;
 };
 
@@ -26,11 +26,7 @@ const STORAGE_KEY = "@LAP_TIMES";
 const { width } = Dimensions.get("window");
 
 function parseTimeToMs(input: string): number | null {
-  // Accepts formats like:
-  // mm:ss.SSS  -> 01:32.450
-  // m:ss       -> 1:32
-  // ss.SSS     -> 32.450
-  // sss        -> 32
+  
   const trimmed = input.trim();
   if (!trimmed) return null;
 
@@ -68,7 +64,7 @@ function msToLabel(ms: number) {
 export default function LapTimeSection() {
   const [input, setInput] = useState("");
   const [laps, setLaps] = useState<Lap[]>([]);
-  const [refresh, setRefresh] = useState(0); // force rerender for animations if needed
+  const [refresh, setRefresh] = useState(0); 
 
   useEffect(() => {
     load();
@@ -134,7 +130,7 @@ export default function LapTimeSection() {
     ]);
   };
 
-  // Chart data
+  
   const chartData = useMemo(() => {
     if (laps.length === 0) return { min: 0, max: 0, items: [] as Lap[] };
     const items = [...laps];
@@ -144,28 +140,28 @@ export default function LapTimeSection() {
     return { min, max, items };
   }, [laps, refresh]);
 
-  // Chart layout
+  
   const chartWidth = Math.min(width * 0.9, 800);
   const chartHeight = 180;
   const barGap = 8;
   const barCount = Math.max(1, chartData.items.length);
   const barWidth = Math.max(12, (chartWidth - barGap * (barCount + 1)) / barCount);
 
-  // Convert time to bar height: smaller ms -> bigger height
+ 
   function computeBarHeight(ms: number) {
     if (chartData.min === chartData.max) {
-      return chartHeight * 0.9; // all equal, show big bars
+      return chartHeight * 0.9; 
     }
-    // invert: smaller ms -> larger ratio
-    const ratio = (chartData.max - ms) / (chartData.max - chartData.min); // 0..1
-    const heightPx = 24 + ratio * (chartHeight - 24); // min base 24px
+    
+    const ratio = (chartData.max - ms) / (chartData.max - chartData.min); 
+    const heightPx = 24 + ratio * (chartHeight - 24); 
     return heightPx;
   }
 
-  // Animated heights (simple fade in + grow)
+  
   const animatedHeights = chartData.items.map((item) => new Animated.Value(0));
   useEffect(() => {
-    // animate to computed heights
+    
     Animated.stagger(
       40,
       animatedHeights.map((av, i) =>
@@ -176,7 +172,7 @@ export default function LapTimeSection() {
         })
       )
     ).start();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    
   }, [chartData.items.length, refresh]);
 
   return (
@@ -208,7 +204,7 @@ export default function LapTimeSection() {
               {chartData.items.map((item, idx) => {
                 const x = barGap + idx * (barWidth + barGap);
                 const bh = computeBarHeight(item.ms);
-                const y = chartHeight - bh; // top position
+                const y = chartHeight - bh; 
                 const labelY = chartHeight - 6;
                 return (
                   <G key={item.id}>
@@ -248,7 +244,7 @@ export default function LapTimeSection() {
 
       <FlatList
         style={styles.list}
-        data={[...laps].reverse()} // show newest first
+        data={[...laps].reverse()} 
         keyExtractor={(item) => item.id}
         renderItem={({ item, index }) => (
           <View style={styles.itemRow}>
