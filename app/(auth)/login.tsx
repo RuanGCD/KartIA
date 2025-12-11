@@ -12,8 +12,6 @@ import {
 import { useRouter, Link } from "expo-router";
 import { useAuth } from "../../Contexts/authContext";
 import { Ionicons } from "@expo/vector-icons";
-import Toast from "react-native-toast-message";
-
 
 export default function Login() {
   const router = useRouter();
@@ -99,6 +97,11 @@ export default function Login() {
         </TouchableOpacity>
       </View>
 
+      {/* ✔ Caminho atualizado conforme sua pasta (auth) com parênteses */}
+      <Link href="/(auth)/forgot-password" style={styles.forgotPassword}>
+        Esqueci minha senha
+      </Link>
+
       <TouchableOpacity
         style={[styles.button, (!email || !senha) && styles.buttonDisabled]}
         disabled={!email || !senha}
@@ -162,6 +165,14 @@ const styles = StyleSheet.create({
   eyeButton: {
     paddingHorizontal: 6,
     paddingVertical: 6,
+  },
+  forgotPassword: {
+    width: "100%",
+    textAlign: "right",
+    color: "#FFD700",
+    marginBottom: 10,
+    marginTop: -5,
+    fontWeight: "bold",
   },
   button: {
     backgroundColor: "#FFD700",

@@ -50,7 +50,7 @@ export default function Layout() {
         <LayoutContent />
       </AuthProvider>
 
-      {/* ‼️ ATENÇÃO — TOAST PRECISA FICAR AQUI NO ROOT */}
+      
       <Toast />
     </GestureHandlerRootView>
   );
