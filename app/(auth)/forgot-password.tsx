@@ -25,7 +25,7 @@ export default function ForgotPassword() {
     try {
       await account.createRecovery(
         email.trim(),
-        "https://google.com"  // depois vou gerar isso pra você!
+        "https://kart-ia-reset-password.vercel.app/" // 🔥 link correto da Vercel
       );
 
       Alert.alert(
