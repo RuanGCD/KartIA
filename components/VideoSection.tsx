@@ -164,7 +164,6 @@ export default function VideoSection() {
           useNativeControls
           resizeMode={ResizeMode.CONTAIN}
           shouldPlay
-          onError={(err) => console.log("Erro vídeo:", err)}
         />
       )}
 
@@ -191,8 +190,8 @@ export default function VideoSection() {
           renderItem={renderVideoCard}
           columnWrapperStyle={styles.row}
           contentContainerStyle={{ paddingBottom: 80 }}
-          style={{ maxHeight: 450 }}
-          showsVerticalScrollIndicator={true}
+          style={{ maxHeight: 450, marginTop: 20 }} // ✅ correção aqui
+          showsVerticalScrollIndicator
         />
       </View>
     </View>
