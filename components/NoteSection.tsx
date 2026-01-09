@@ -66,33 +66,34 @@ export default function NoteSection() {
           <Text style={styles.addButtonText}>Adicionar</Text>
         </TouchableOpacity>
 
-        <FlatList
-          style={{ marginTop: 20 }}
-          data={notes}
-          keyExtractor={(item, index) => index.toString()}
-          renderItem={({ item, index }) => (
-            <View style={styles.noteItem}>
-              <Text style={styles.noteText}>{item}</Text>
+        {/* 👇 Container que resolve o problema */}
+        <View style={styles.listContainer}>
+          <FlatList
+            data={notes}
+            keyExtractor={(_, index) => index.toString()}
+            showsVerticalScrollIndicator={false}
+            renderItem={({ item, index }) => (
+              <View style={styles.noteItem}>
+                <Text style={styles.noteText}>{item}</Text>
 
-              <TouchableOpacity onPress={() => removeNote(index)}>
-                <Text style={styles.remove}>X</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-        />
+                <TouchableOpacity onPress={() => removeNote(index)}>
+                  <Text style={styles.remove}>X</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          />
+        </View>
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  
   container: {
     width: "100%",
     alignItems: "center",
   },
 
-  
   box: {
     width: "90%",
     minHeight: 200,
@@ -136,6 +137,12 @@ const styles = StyleSheet.create({
     color: "#000",
     fontWeight: "800",
     fontSize: 16,
+  },
+
+  /* ✅ ESSA PARTE É A CHAVE */
+  listContainer: {
+    marginTop: 20,
+    maxHeight: 260, // ajuste se quiser mais/menos espaço
   },
 
   noteItem: {
