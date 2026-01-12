@@ -7,6 +7,8 @@ import {
   Image,
   ActivityIndicator,
   TextInput,
+  Alert,
+  ScrollView,
 } from "react-native";
 
 import * as ImagePicker from "expo-image-picker";
@@ -42,7 +44,7 @@ export default function Profile() {
     })();
   }, []);
 
-  // Carrega dados sempre ao focar a tela
+  // Carrega dados ao focar a tela
   useFocusEffect(
     React.useCallback(() => {
       const loadUserData = async () => {
@@ -126,9 +128,45 @@ export default function Profile() {
     router.replace("/(auth)/login");
   };
 
+  // 🔥 EXCLUIR CONTA
+  const handleDeleteAccount = () => {
+    if (!user) return;
+
+    Alert.alert(
+      "Excluir conta",
+      "Tem certeza que deseja excluir sua conta?\nEssa ação é irreversível.",
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Excluir",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await databases.deleteDocument(
+                DB_ID,
+                USERS_COLLECTION_ID,
+                user.$id
+              );
+
+              await AsyncStorage.removeItem("profile_image");
+              await logout();
+              router.replace("/(auth)/login");
+            } catch (err) {
+              console.error("Erro ao excluir conta:", err);
+              Alert.alert(
+                "Erro",
+                "Não foi possível excluir sua conta. Tente novamente."
+              );
+            }
+          },
+        },
+      ]
+    );
+  };
+
   if (loading) {
     return (
-      <View style={styles.container}>
+      <View style={styles.loadingContainer}>
         <ActivityIndicator color="#FFD700" size="large" />
       </View>
     );
@@ -136,7 +174,7 @@ export default function Profile() {
 
   if (!userData) {
     return (
-      <View style={styles.container}>
+      <View style={styles.loadingContainer}>
         <Text style={styles.error}>Erro ao carregar perfil.</Text>
         <TouchableOpacity style={styles.button} onPress={handleLogout}>
           <Text style={styles.buttonText}>Voltar ao Login</Text>
@@ -146,10 +184,12 @@ export default function Profile() {
   }
 
   return (
-    <View style={styles.container}>
+    <ScrollView
+      contentContainerStyle={styles.container}
+      showsVerticalScrollIndicator={false}
+    >
       <Text style={styles.logo}>KartIA</Text>
 
-      {/* FOTO */}
       <TouchableOpacity style={styles.imageWrapper} onPress={pickImage}>
         {profileImage ? (
           <Image source={{ uri: profileImage }} style={styles.profileImage} />
@@ -159,13 +199,10 @@ export default function Profile() {
       </TouchableOpacity>
 
       <View style={styles.card}>
-        {/* Nome */}
         <Text style={styles.label}>Nome:</Text>
         <Text style={styles.value}>{userData.nome}</Text>
 
-        {/* Apelido (EDITÁVEL) */}
         <Text style={styles.label}>Apelido:</Text>
-
         <TextInput
           style={styles.input}
           placeholder="Digite um apelido opcional"
@@ -178,19 +215,15 @@ export default function Profile() {
           <Text style={styles.saveBtnText}>Salvar Apelido</Text>
         </TouchableOpacity>
 
-        {/* Idade */}
         <Text style={styles.label}>Idade:</Text>
-
         <View style={styles.row}>
           <Text style={styles.value}>{userData.idade}</Text>
-
           <TouchableOpacity
             style={[styles.editButton, styles.minusButton]}
             onPress={() => alterarIdade(-1)}
           >
             <Text style={styles.editButtonText}>-</Text>
           </TouchableOpacity>
-
           <TouchableOpacity
             style={styles.editButton}
             onPress={() => alterarIdade(1)}
@@ -199,11 +232,9 @@ export default function Profile() {
           </TouchableOpacity>
         </View>
 
-        {/* Corridas */}
         <Text style={styles.label}>Corridas:</Text>
         <Text style={styles.value}>{userData.corridas}</Text>
 
-        {/* Vitórias */}
         <Text style={styles.label}>Vitórias:</Text>
         <Text style={styles.value}>{userData.vitorias}</Text>
       </View>
@@ -211,17 +242,32 @@ export default function Profile() {
       <TouchableOpacity style={styles.button} onPress={handleLogout}>
         <Text style={styles.buttonText}>Sair</Text>
       </TouchableOpacity>
-    </View>
+
+      <TouchableOpacity
+        style={styles.deleteButton}
+        onPress={handleDeleteAccount}
+      >
+        <Text style={styles.deleteButtonText}>Excluir Conta</Text>
+      </TouchableOpacity>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flexGrow: 1,
     backgroundColor: "#000",
     alignItems: "center",
     padding: 20,
     paddingTop: 60,
+    paddingBottom: 50,
+  },
+
+  loadingContainer: {
+    flex: 1,
+    backgroundColor: "#000",
+    alignItems: "center",
+    justifyContent: "center",
   },
 
   logo: {
@@ -333,6 +379,20 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingVertical: 10,
     paddingHorizontal: 30,
+    marginBottom: 10,
+  },
+
+  deleteButton: {
+    backgroundColor: "#FF3333",
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 30,
+  },
+
+  deleteButtonText: {
+    color: "#FFF",
+    fontWeight: "bold",
+    fontSize: 16,
   },
 
   buttonText: {
