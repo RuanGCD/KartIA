@@ -36,26 +36,34 @@ export default function Profile() {
   const [novoApelido, setNovoApelido] = useState("");
   const router = useRouter();
 
-  // Carrega imagem salva
-  useEffect(() => {
-    (async () => {
-      const storedImage = await AsyncStorage.getItem("profile_image");
-      if (storedImage) setProfileImage(storedImage);
-    })();
-  }, []);
+  // 🔑 Chave única da imagem por usuário
+  const profileImageKey = user ? `profile_image_${user.$id}` : null;
 
-  // Carrega dados ao focar a tela
+  // 📸 Carrega imagem do usuário logado
+  useEffect(() => {
+    if (!profileImageKey) return;
+
+    (async () => {
+      const storedImage = await AsyncStorage.getItem(profileImageKey);
+      setProfileImage(storedImage);
+    })();
+  }, [profileImageKey]);
+
+  // 🔄 Carrega dados do usuário
   useFocusEffect(
     React.useCallback(() => {
       const loadUserData = async () => {
         if (!user) return;
+
         try {
           setLoading(true);
+
           const document = await databases.getDocument<UserData>(
             DB_ID,
             USERS_COLLECTION_ID,
             user.$id
           );
+
           setUserData(document);
           setNovoApelido(document.apelido ?? "");
         } catch (err) {
@@ -69,8 +77,10 @@ export default function Profile() {
     }, [user])
   );
 
-  // Selecionar imagem
+  // 📷 Selecionar imagem
   const pickImage = async () => {
+    if (!profileImageKey) return;
+
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
@@ -81,13 +91,13 @@ export default function Profile() {
     if (!result.canceled) {
       const uri = result.assets[0].uri;
       setProfileImage(uri);
-      await AsyncStorage.setItem("profile_image", uri);
+      await AsyncStorage.setItem(profileImageKey, uri);
     }
   };
 
-  // Atualizar idade
+  // 🎂 Alterar idade
   const alterarIdade = async (valor: number) => {
-    if (!userData) return;
+    if (!userData || !user) return;
 
     try {
       const novaIdade = Math.max(0, userData.idade + valor);
@@ -95,7 +105,7 @@ export default function Profile() {
       const updated = await databases.updateDocument<UserData>(
         DB_ID,
         USERS_COLLECTION_ID,
-        user!.$id,
+        user.$id,
         { idade: novaIdade }
       );
 
@@ -105,32 +115,43 @@ export default function Profile() {
     }
   };
 
-  // Atualizar apelido
+  // 💾 Salvar apelido
   const salvarApelido = async () => {
-    if (!userData) return;
+    if (!userData || !user) return;
 
     try {
       const updated = await databases.updateDocument<UserData>(
         DB_ID,
         USERS_COLLECTION_ID,
-        user!.$id,
+        user.$id,
         { apelido: novoApelido }
       );
 
       setUserData(updated);
+
+      Alert.alert(
+        "Alterações salvas",
+        "Seu apelido foi atualizado com sucesso!"
+      );
     } catch (err) {
       console.error("Erro ao salvar apelido:", err);
+
+      Alert.alert(
+        "Erro",
+        "Não foi possível salvar as alterações. Tente novamente."
+      );
     }
   };
 
+  // 🚪 Logout
   const handleLogout = async () => {
     await logout();
     router.replace("/(auth)/login");
   };
 
-  // 🔥 EXCLUIR CONTA
+  // ❌ Excluir conta
   const handleDeleteAccount = () => {
-    if (!user) return;
+    if (!user || !profileImageKey) return;
 
     Alert.alert(
       "Excluir conta",
@@ -148,7 +169,7 @@ export default function Profile() {
                 user.$id
               );
 
-              await AsyncStorage.removeItem("profile_image");
+              await AsyncStorage.removeItem(profileImageKey);
               await logout();
               router.replace("/(auth)/login");
             } catch (err) {
@@ -184,10 +205,7 @@ export default function Profile() {
   }
 
   return (
-    <ScrollView
-      contentContainerStyle={styles.container}
-      showsVerticalScrollIndicator={false}
-    >
+    <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.logo}>KartIA</Text>
 
       <TouchableOpacity style={styles.imageWrapper} onPress={pickImage}>
@@ -243,10 +261,7 @@ export default function Profile() {
         <Text style={styles.buttonText}>Sair</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity
-        style={styles.deleteButton}
-        onPress={handleDeleteAccount}
-      >
+      <TouchableOpacity style={styles.deleteButton} onPress={handleDeleteAccount}>
         <Text style={styles.deleteButtonText}>Excluir Conta</Text>
       </TouchableOpacity>
     </ScrollView>
@@ -262,21 +277,18 @@ const styles = StyleSheet.create({
     paddingTop: 60,
     paddingBottom: 50,
   },
-
   loadingContainer: {
     flex: 1,
     backgroundColor: "#000",
     alignItems: "center",
     justifyContent: "center",
   },
-
   logo: {
     fontSize: 32,
     color: "#FFD700",
     fontWeight: "bold",
     marginBottom: 15,
   },
-
   imageWrapper: {
     width: 120,
     height: 120,
@@ -288,18 +300,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 25,
   },
-
   profileImage: {
     width: "100%",
     height: "100%",
     borderRadius: 60,
   },
-
   addPhotoText: {
     color: "#FFD700",
     fontSize: 14,
   },
-
   card: {
     width: "100%",
     backgroundColor: "#111",
@@ -309,19 +318,16 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#FFD700",
   },
-
   label: {
     color: "#FFD700",
     fontSize: 16,
     marginTop: 5,
   },
-
   value: {
     color: "#FFF",
     fontSize: 18,
     fontWeight: "bold",
   },
-
   input: {
     backgroundColor: "#222",
     color: "#FFF",
@@ -333,7 +339,6 @@ const styles = StyleSheet.create({
     marginTop: 5,
     marginBottom: 10,
   },
-
   saveBtn: {
     backgroundColor: "#FFD700",
     paddingVertical: 8,
@@ -341,20 +346,17 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 10,
   },
-
   saveBtnText: {
     color: "#000",
     fontWeight: "bold",
     fontSize: 16,
   },
-
   row: {
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
     marginVertical: 8,
   },
-
   editButton: {
     backgroundColor: "#FFD700",
     width: 35,
@@ -363,17 +365,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderRadius: 6,
   },
-
   minusButton: {
     backgroundColor: "#FF4444",
   },
-
   editButtonText: {
     fontSize: 18,
     color: "#000",
     fontWeight: "bold",
   },
-
   button: {
     backgroundColor: "#FFD700",
     borderRadius: 8,
@@ -381,26 +380,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 30,
     marginBottom: 10,
   },
-
   deleteButton: {
     backgroundColor: "#FF3333",
     borderRadius: 8,
     paddingVertical: 10,
     paddingHorizontal: 30,
   },
-
   deleteButtonText: {
     color: "#FFF",
     fontWeight: "bold",
     fontSize: 16,
   },
-
   buttonText: {
     color: "#000",
     fontWeight: "bold",
     fontSize: 16,
   },
-
   error: {
     color: "red",
     marginBottom: 10,
