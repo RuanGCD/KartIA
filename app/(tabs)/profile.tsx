@@ -36,10 +36,10 @@ export default function Profile() {
   const [novoApelido, setNovoApelido] = useState("");
   const router = useRouter();
 
-  // 🔑 Chave única da imagem por usuário
+  //  Chave única da imagem por usuário
   const profileImageKey = user ? `profile_image_${user.$id}` : null;
 
-  // 📸 Carrega imagem do usuário logado
+  //  Carrega imagem do usuário logado
   useEffect(() => {
     if (!profileImageKey) return;
 
@@ -49,7 +49,7 @@ export default function Profile() {
     })();
   }, [profileImageKey]);
 
-  // 🔄 Carrega dados do usuário
+  //  Carrega dados do usuário
   useFocusEffect(
     React.useCallback(() => {
       const loadUserData = async () => {
@@ -77,7 +77,7 @@ export default function Profile() {
     }, [user])
   );
 
-  // 📷 Selecionar imagem
+  //  Selecionar imagem
   const pickImage = async () => {
     if (!profileImageKey) return;
 
@@ -95,7 +95,7 @@ export default function Profile() {
     }
   };
 
-  // 🎂 Alterar idade
+  //  Alterar idade
   const alterarIdade = async (valor: number) => {
     if (!userData || !user) return;
 
@@ -115,7 +115,7 @@ export default function Profile() {
     }
   };
 
-  // 💾 Salvar apelido
+  //  Salvar apelido
   const salvarApelido = async () => {
     if (!userData || !user) return;
 
@@ -143,13 +143,13 @@ export default function Profile() {
     }
   };
 
-  // 🚪 Logout
+  //  Logout
   const handleLogout = async () => {
     await logout();
     router.replace("/(auth)/login");
   };
 
-  // ❌ Excluir conta
+  //  Excluir conta
   const handleDeleteAccount = () => {
     if (!user || !profileImageKey) return;
 
