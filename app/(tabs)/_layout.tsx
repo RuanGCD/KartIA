@@ -49,6 +49,16 @@ export default function TabsLayout() {
           ),
         }}
       />
+      <Tabs.Screen
+        name="equipe"
+        options={{
+        title: "Equipe",
+        tabBarIcon: ({ color, size }) => (
+        <Ionicons name="people" size={size} color={color} />
+        ),
+      }}
+    />
+
 
       {/* ----------- TELAS QUE NÃO DEVEM VIRAR TAB ----------- */}
       <Tabs.Screen

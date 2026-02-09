@@ -14,6 +14,7 @@ import { useAuth } from "../../../Contexts/authContext";
 import { Picker } from "@react-native-picker/picker";
 import { leaveChampionship, deleteChampionship } from "../../../utils/championships";
 import { useFocusEffect } from "@react-navigation/native";
+import { Image } from "react-native";
 
 const DATABASE_ID = "68f65dd60011cc69ba07";
 const CHAMP_COLLECTION = "championships";
@@ -28,8 +29,11 @@ export default function CampeonatoScreen() {
   const [nomes, setNomes] = useState<{ [key: string]: string }>({});
   const [modalVisible, setModalVisible] = useState(false);
   const [resultados, setResultados] = useState<{ [key: string]: string }>({});
+  const TEAM_COLLECTION = "teams";
+  const [teamIcons, setTeamIcons] = useState<{ [key: string]: string }>({});
 
-  // 🔹 Carregar dados do campeonato
+
+  //  Carregar dados do campeonato
   const carregar = async () => {
     setCampeonato(null);
     setScores({});
@@ -64,6 +68,7 @@ export default function CampeonatoScreen() {
         results.forEach((r) => (map[r.id] = r.nome));
 
         setNomes(map);
+        carregarIconesEquipes(ids);
       }
     } catch (e) {
       console.error(e);
@@ -71,14 +76,14 @@ export default function CampeonatoScreen() {
     }
   };
 
-  // 🔄 RECARREGAR TODA VEZ QUE A TELA ABRIR
+  //  RECARREGAR TODA VEZ QUE A TELA ABRIR
   useFocusEffect(
     React.useCallback(() => {
       if (id) carregar();
     }, [id])
   );
 
-  // 🔹 Abrir modal da corrida
+  //  Abrir modal da corrida
   const abrirCorrida = () => {
     if (!campeonato) return;
 
@@ -89,7 +94,7 @@ export default function CampeonatoScreen() {
     setModalVisible(true);
   };
 
-  // 🔹 Salvar corrida
+  //  Salvar corrida
   const salvarCorrida = async () => {
     if (!campeonato) return;
 
@@ -150,7 +155,7 @@ export default function CampeonatoScreen() {
     }
   };
 
-  // 🚪 Sair
+  //  Sair
   const sairDoCampeonato = async () => {
     if (!campeonato || !user) return;
 
@@ -176,7 +181,7 @@ export default function CampeonatoScreen() {
     );
   };
 
-  // ❌ Excluir campeonato
+  //  Excluir campeonato
   const excluirCampeonato = async () => {
     if (!campeonato || !user) return;
 
@@ -201,105 +206,161 @@ export default function CampeonatoScreen() {
       ]
     );
   };
+  const carregarIconesEquipes = async (userIds: string[]) => {
+  try {
+    if (userIds.length === 0) return;
+
+    const res = await databases.listDocuments(
+      DATABASE_ID,
+      TEAM_COLLECTION
+    );
+
+    const map: { [key: string]: string } = {};
+
+    res.documents.forEach((team: any) => {
+      team.pilotos?.forEach((uid: string) => {
+        if (userIds.includes(uid)) {
+          map[uid] = team.icon || "";
+        }
+      });
+    });
+
+    setTeamIcons(map);
+  } catch (err) {
+    console.log("Erro ao carregar ícones das equipes", err);
+  }
+};
+
 
   const sorted = Object.entries(scores).sort((a, b) => b[1] - a[1]);
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>{campeonato?.nome || "Carregando..."}</Text>
+  <View style={styles.container}>
+    <Text style={styles.title}>{campeonato?.nome || "Carregando..."}</Text>
 
-      <FlatList
-        data={sorted}
-        keyExtractor={([id]) => id}
-        renderItem={({ item, index }) => (
-          <View style={styles.row}>
-            <Text style={styles.pos}>{index + 1}º</Text>
-            <Text style={styles.user}>{nomes[item[0]] || item[0]}</Text>
-            <Text style={styles.points}>{item[1]} pts</Text>
-          </View>
-        )}
-      />
-
-      {user?.$id === campeonato?.ownerId && (
-        <TouchableOpacity style={styles.button} onPress={abrirCorrida}>
-          <Text style={styles.buttonText}>Corrida Feita</Text>
-        </TouchableOpacity>
-      )}
-
-      {user?.$id === campeonato?.ownerId && (
+    <FlatList 
+      data={sorted}
+      keyExtractor={([id]) => id}
+      renderItem={({ item, index }) => (
         <TouchableOpacity
-          style={[styles.button, { backgroundColor: "#aa0000", marginTop: 10 }]}
-          onPress={excluirCampeonato}
+          style={styles.row}
+          onPress={() => router.push({
+            pathname: "/profile/[id]",
+            params: { id: item[0] },
+          })}
         >
-          <Text style={[styles.buttonText, { color: "#fff" }]}>Excluir Campeonato</Text>
-        </TouchableOpacity>
-      )}
+          <Text style={styles.pos}>{index + 1}º</Text>
 
-      <TouchableOpacity
-        style={[styles.button, { backgroundColor: "#333", marginTop: 10 }]}
-        onPress={() => router.back()}
-      >
-        <Text style={[styles.buttonText, { color: "#FFD700" }]}>Voltar</Text>
-      </TouchableOpacity>
+          <View style={styles.userRow}>
+            <Text style={styles.user}>
+              {nomes[item[0]] || item[0]}
+            </Text>
 
-      {user?.$id !== campeonato?.ownerId && (
-        <TouchableOpacity
-          style={[styles.button, { backgroundColor: "#aa0000", marginTop: 10 }]}
-          onPress={sairDoCampeonato}
-        >
-          <Text style={[styles.buttonText, { color: "#fff" }]}>Sair do Campeonato</Text>
-        </TouchableOpacity>
-      )}
-
-      {/* Modal corrida */}
-      {campeonato && (
-        <Modal visible={modalVisible} animationType="slide" transparent={true}>
-          <View style={styles.modalContainer}>
-            <View style={styles.modalBox}>
-              <Text style={styles.modalTitle}>Registrar Corrida</Text>
-
-              <FlatList
-                data={Object.keys(nomes)}
-                keyExtractor={(id) => id}
-                renderItem={({ item }) => (
-                  <View style={styles.pickerRow}>
-                    <Text style={styles.pickerLabel}>{nomes[item]}</Text>
-
-                    <Picker
-                      selectedValue={resultados[item]}
-                      style={styles.picker}
-                      dropdownIconColor="#FFD700"
-                      onValueChange={(val) =>
-                        setResultados((prev) => ({ ...prev, [item]: val }))
-                      }
-                    >
-                      <Picker.Item label="Não correu" value="naoCorreu" />
-                      <Picker.Item label="Não terminou" value="naoTerminou" />
-
-                      {[...Array(Object.keys(nomes).length)].map((_, i) => (
-                        <Picker.Item key={i} label={`${i + 1}º Lugar`} value={`${i + 1}`} />
-                      ))}
-                    </Picker>
-                  </View>
-                )}
+            {teamIcons[item[0]] && (
+              <Image
+                source={{ uri: teamIcons[item[0]] }}
+                style={styles.teamIcon}
               />
-
-              <TouchableOpacity style={styles.button} onPress={salvarCorrida}>
-                <Text style={styles.buttonText}>Salvar Corrida</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.button, { backgroundColor: "#333", marginTop: 10 }]}
-                onPress={() => setModalVisible(false)}
-              >
-                <Text style={[styles.buttonText, { color: "#FFD700" }]}>Cancelar</Text>
-              </TouchableOpacity>
-            </View>
+            )}
           </View>
-        </Modal>
+
+          <Text style={styles.points}>{item[1]} pts</Text>
+        </TouchableOpacity>
       )}
-    </View>
-  );
+    />
+
+    {user?.$id === campeonato?.ownerId && (
+      <TouchableOpacity style={styles.button} onPress={abrirCorrida}>
+        <Text style={styles.buttonText}>Corrida Feita</Text>
+      </TouchableOpacity>
+    )}
+
+    {user?.$id === campeonato?.ownerId && (
+      <TouchableOpacity
+        style={[styles.button, { backgroundColor: "#aa0000", marginTop: 10 }]}
+        onPress={excluirCampeonato}
+      >
+        <Text style={[styles.buttonText, { color: "#fff" }]}>
+          Excluir Campeonato
+        </Text>
+      </TouchableOpacity>
+    )}
+
+    <TouchableOpacity
+      style={[styles.button, { backgroundColor: "#333", marginTop: 10 }]}
+      onPress={() => router.back()}
+    >
+      <Text style={[styles.buttonText, { color: "#FFD700" }]}>
+        Voltar
+      </Text>
+    </TouchableOpacity>
+
+    {user?.$id !== campeonato?.ownerId && (
+      <TouchableOpacity
+        style={[styles.button, { backgroundColor: "#aa0000", marginTop: 10 }]}
+        onPress={sairDoCampeonato}
+      >
+        <Text style={[styles.buttonText, { color: "#fff" }]}>
+          Sair do Campeonato
+        </Text>
+      </TouchableOpacity>
+    )}
+
+    {/* Modal corrida */}
+    {campeonato && (
+      <Modal visible={modalVisible} animationType="slide" transparent={true}>
+        <View style={styles.modalContainer}>
+          <View style={styles.modalBox}>
+            <Text style={styles.modalTitle}>Registrar Corrida</Text>
+
+            <FlatList
+              data={Object.keys(nomes)}
+              keyExtractor={(id) => id}
+              renderItem={({ item }) => (
+                <View style={styles.pickerRow}>
+                  <Text style={styles.pickerLabel}>{nomes[item]}</Text>
+
+                  <Picker
+                    selectedValue={resultados[item]}
+                    style={styles.picker}
+                    dropdownIconColor="#FFD700"
+                    onValueChange={(val) =>
+                      setResultados((prev) => ({ ...prev, [item]: val }))
+                    }
+                  >
+                    <Picker.Item label="Não correu" value="naoCorreu" />
+                    <Picker.Item label="Não terminou" value="naoTerminou" />
+
+                    {[...Array(Object.keys(nomes).length)].map((_, i) => (
+                      <Picker.Item
+                        key={i}
+                        label={`${i + 1}º Lugar`}
+                        value={`${i + 1}`}
+                      />
+                    ))}
+                  </Picker>
+                </View>
+              )}
+            />
+
+            <TouchableOpacity style={styles.button} onPress={salvarCorrida}>
+              <Text style={styles.buttonText}>Salvar Corrida</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.button, { backgroundColor: "#333", marginTop: 10 }]}
+              onPress={() => setModalVisible(false)}
+            >
+              <Text style={[styles.buttonText, { color: "#FFD700" }]}>
+                Cancelar
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+    )}
+  </View>
+);
 }
 
 const styles = StyleSheet.create({
@@ -312,18 +373,25 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   row: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    backgroundColor: "#111",
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: "#333",
-  },
+  flexDirection: "row",
+  alignItems: "center",
+  backgroundColor: "#111",
+  padding: 12,
+  borderRadius: 8,
+  marginBottom: 8,
+  borderWidth: 1,
+  borderColor: "#333",
+},
+
   pos: { color: "#FFD700", fontWeight: "bold", width: 40 },
   user: { color: "#fff", flex: 1 },
-  points: { color: "#FFD700", fontWeight: "bold" },
+  points: {
+  color: "#FFD700",
+  fontWeight: "bold",
+  width: 70,          // coluna fixa
+  textAlign: "right",
+},
+
   button: {
     backgroundColor: "#FFD700",
     padding: 12,
@@ -358,4 +426,16 @@ const styles = StyleSheet.create({
     backgroundColor: "#222",
     borderRadius: 6,
   },
+userRow: {
+  flexDirection: "row",
+  alignItems: "center",
+  flex: 1,
+},
+
+teamIcon: {
+  width: 22,
+  height: 22,
+  marginLeft: 6,
+},
+
 });

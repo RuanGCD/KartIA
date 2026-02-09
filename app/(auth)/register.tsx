@@ -19,36 +19,83 @@ const COLLECTION_ID = "users";
 
 export default function Register() {
   const { refreshUser, loading } = useAuth();
+
   const [nome, setNome] = useState("");
-  const [idade, setIdade] = useState("");
+  const [birthdate, setBirthDate] = useState(""); // DD/MM/AAAA
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [mostrarSenha, setMostrarSenha] = useState(false);
 
+  // Função para calcular idade
+  const calcularIdade = (data: string) => {
+    const [dia, mes, ano] = data.split("/").map(Number);
+    const nascimento = new Date(ano, mes - 1, dia);
+    const hoje = new Date();
+
+    let idade = hoje.getFullYear() - nascimento.getFullYear();
+    const m = hoje.getMonth() - nascimento.getMonth();
+
+    if (m < 0 || (m === 0 && hoje.getDate() < nascimento.getDate())) {
+      idade--;
+    }
+
+    return idade;
+  };
+
   const handleRegister = async () => {
-    if (!nome || !idade || !email || !senha) {
+    if (!nome || !birthdate || !email || !senha) {
       Alert.alert("Erro", "Preencha todos os campos!");
       return;
     }
 
+    // Validação simples do formato
+    if (!/^\d{2}\/\d{2}\/\d{4}$/.test(birthdate)) {
+      Alert.alert("Erro", "Data inválida. Use DD/MM/AAAA");
+      return;
+    }
+
+    const idade = calcularIdade(birthdate);
+
+    if (isNaN(idade)) {
+      Alert.alert("Erro", "Data de nascimento inválida");
+      return;
+    }
+
+    if (idade < 14) {
+      Alert.alert(
+        "Idade mínima",
+        "Você precisa ter pelo menos 14 anos para criar uma conta."
+      );
+      return;
+    }
+
     try {
-      // 🔹 Cria o usuário no Auth
+      // Cria o usuário no Auth
       const user = await account.create(ID.unique(), email, senha, nome);
       await account.createEmailPasswordSession(email, senha);
 
-      // 🔹 Cria o documento na coleção "users"
-      await databases.createDocument(DATABASE_ID, COLLECTION_ID, user.$id, {
-        nome,
-        idade: Number(idade),
-        corridas: 0,
-        vitorias: 0,
-      });
+      // Cria o documento no banco
+      await databases.createDocument(
+        DATABASE_ID,
+        COLLECTION_ID,
+        user.$id,
+        {
+          nome,
+          birthdate, // salva a data real
+          idade,     // salva idade calculada
+          corridas: 0,
+          vitorias: 0,
+        }
+      );
 
       await refreshUser();
       Alert.alert("Sucesso", "Conta criada com sucesso!");
     } catch (err: any) {
       console.error("Erro ao registrar:", err);
-      Alert.alert("Erro ao registrar", err.message || "Tente novamente mais tarde.");
+      Alert.alert(
+        "Erro ao registrar",
+        err.message || "Tente novamente mais tarde."
+      );
     }
   };
 
@@ -65,12 +112,12 @@ export default function Register() {
       />
 
       <TextInput
-        placeholder="Idade"
+        placeholder="Data de nascimento (DD/MM/AAAA)"
         placeholderTextColor="#888"
         style={styles.input}
         keyboardType="numeric"
-        value={idade}
-        onChangeText={setIdade}
+        value={birthdate}
+        onChangeText={setBirthDate}
       />
 
       <TextInput
@@ -82,7 +129,7 @@ export default function Register() {
         onChangeText={setEmail}
       />
 
-      {/* 🔹 CAMPO SENHA COM ÍCONE */}
+      {/* CAMPO SENHA COM ÍCONE */}
       <View style={styles.passwordContainer}>
         <TextInput
           placeholder="Senha"
@@ -119,7 +166,10 @@ export default function Register() {
 
       <Text style={{ color: "#fff", marginTop: 15 }}>
         Já tem conta?{" "}
-        <Link href="/(auth)/login" style={{ color: "#FFD700", fontWeight: "bold" }}>
+        <Link
+          href="/(auth)/login"
+          style={{ color: "#FFD700", fontWeight: "bold" }}
+        >
           Entrar
         </Link>
       </Text>
@@ -139,8 +189,6 @@ const styles = StyleSheet.create({
     padding: 10,
     marginBottom: 10,
   },
-
-  /* 🔹 Igual ao login */
   passwordContainer: {
     flexDirection: "row",
     width: "80%",
@@ -155,7 +203,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     paddingVertical: 6,
   },
-
   button: {
     backgroundColor: "#FFD700",
     paddingVertical: 10,

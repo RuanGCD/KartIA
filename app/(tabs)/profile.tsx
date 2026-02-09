@@ -23,7 +23,7 @@ import { useAuth } from "../../hooks/useAuth";
 interface UserData extends Models.Document {
   nome: string;
   apelido?: string;
-  idade: number;
+  birthdate?: string; // DD/MM/AAAA (opcional para usuários antigos)
   corridas: number;
   vitorias: number;
 }
@@ -34,12 +34,32 @@ export default function Profile() {
   const [loading, setLoading] = useState(true);
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [novoApelido, setNovoApelido] = useState("");
+  const [birthInput, setBirthInput] = useState("");
   const router = useRouter();
 
-  //  Chave única da imagem por usuário
   const profileImageKey = user ? `profile_image_${user.$id}` : null;
 
-  //  Carrega imagem do usuário logado
+  // ===== CALCULAR IDADE =====
+  const calcularIdade = (data?: string) => {
+    if (!data) return null;
+
+    const [dia, mes, ano] = data.split("/").map(Number);
+    if (!dia || !mes || !ano) return null;
+
+    const nascimento = new Date(ano, mes - 1, dia);
+    const hoje = new Date();
+
+    let idade = hoje.getFullYear() - nascimento.getFullYear();
+    const m = hoje.getMonth() - nascimento.getMonth();
+
+    if (m < 0 || (m === 0 && hoje.getDate() < nascimento.getDate())) {
+      idade--;
+    }
+
+    return idade;
+  };
+
+  // ===== CARREGAR IMAGEM =====
   useEffect(() => {
     if (!profileImageKey) return;
 
@@ -49,7 +69,7 @@ export default function Profile() {
     })();
   }, [profileImageKey]);
 
-  //  Carrega dados do usuário
+  // ===== CARREGAR DADOS =====
   useFocusEffect(
     React.useCallback(() => {
       const loadUserData = async () => {
@@ -66,6 +86,7 @@ export default function Profile() {
 
           setUserData(document);
           setNovoApelido(document.apelido ?? "");
+          setBirthInput(document.birthdate ?? "");
         } catch (err) {
           console.error("Erro ao carregar dados:", err);
         } finally {
@@ -77,7 +98,7 @@ export default function Profile() {
     }, [user])
   );
 
-  //  Selecionar imagem
+  // ===== SELECIONAR IMAGEM =====
   const pickImage = async () => {
     if (!profileImageKey) return;
 
@@ -95,27 +116,7 @@ export default function Profile() {
     }
   };
 
-  //  Alterar idade
-  const alterarIdade = async (valor: number) => {
-    if (!userData || !user) return;
-
-    try {
-      const novaIdade = Math.max(0, userData.idade + valor);
-
-      const updated = await databases.updateDocument<UserData>(
-        DB_ID,
-        USERS_COLLECTION_ID,
-        user.$id,
-        { idade: novaIdade }
-      );
-
-      setUserData(updated);
-    } catch (err) {
-      console.error("Erro ao atualizar idade:", err);
-    }
-  };
-
-  //  Salvar apelido
+  // ===== SALVAR APELIDO =====
   const salvarApelido = async () => {
     if (!userData || !user) return;
 
@@ -128,28 +129,50 @@ export default function Profile() {
       );
 
       setUserData(updated);
-
-      Alert.alert(
-        "Alterações salvas",
-        "Seu apelido foi atualizado com sucesso!"
-      );
+      Alert.alert("Sucesso", "Apelido atualizado!");
     } catch (err) {
       console.error("Erro ao salvar apelido:", err);
-
-      Alert.alert(
-        "Erro",
-        "Não foi possível salvar as alterações. Tente novamente."
-      );
+      Alert.alert("Erro", "Não foi possível salvar.");
     }
   };
 
-  //  Logout
+  // ===== SALVAR BIRTHDATE =====
+  const salvarBirthdate = async () => {
+    if (!user || !birthInput) {
+      Alert.alert("Erro", "Preencha a data.");
+      return;
+    }
+
+    // validação simples DD/MM/AAAA
+    const regex = /^\d{2}\/\d{2}\/\d{4}$/;
+    if (!regex.test(birthInput)) {
+      Alert.alert("Erro", "Formato inválido. Use DD/MM/AAAA");
+      return;
+    }
+
+    try {
+      const updated = await databases.updateDocument<UserData>(
+        DB_ID,
+        USERS_COLLECTION_ID,
+        user.$id,
+        { birthdate: birthInput }
+      );
+
+      setUserData(updated);
+      Alert.alert("Sucesso", "Data de nascimento salva!");
+    } catch (err) {
+      console.error(err);
+      Alert.alert("Erro", "Não foi possível salvar.");
+    }
+  };
+
+  // ===== LOGOUT =====
   const handleLogout = async () => {
     await logout();
     router.replace("/(auth)/login");
   };
 
-  //  Excluir conta
+  // ===== EXCLUIR CONTA =====
   const handleDeleteAccount = () => {
     if (!user || !profileImageKey) return;
 
@@ -173,11 +196,8 @@ export default function Profile() {
               await logout();
               router.replace("/(auth)/login");
             } catch (err) {
-              console.error("Erro ao excluir conta:", err);
-              Alert.alert(
-                "Erro",
-                "Não foi possível excluir sua conta. Tente novamente."
-              );
+              console.error(err);
+              Alert.alert("Erro", "Não foi possível excluir.");
             }
           },
         },
@@ -185,6 +205,7 @@ export default function Profile() {
     );
   };
 
+  // ===== LOADING =====
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -203,6 +224,8 @@ export default function Profile() {
       </View>
     );
   }
+
+  const idadeCalculada = calcularIdade(userData.birthdate);
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -223,7 +246,7 @@ export default function Profile() {
         <Text style={styles.label}>Apelido:</Text>
         <TextInput
           style={styles.input}
-          placeholder="Digite um apelido opcional"
+          placeholder="Opcional"
           placeholderTextColor="#777"
           value={novoApelido}
           onChangeText={setNovoApelido}
@@ -233,22 +256,28 @@ export default function Profile() {
           <Text style={styles.saveBtnText}>Salvar Apelido</Text>
         </TouchableOpacity>
 
+        <Text style={styles.label}>Data de nascimento:</Text>
+        {userData.birthdate ? (
+          <Text style={styles.value}>{userData.birthdate}</Text>
+        ) : (
+          <>
+            <TextInput
+              style={styles.input}
+              placeholder="DD/MM/AAAA"
+              placeholderTextColor="#777"
+              value={birthInput}
+              onChangeText={setBirthInput}
+            />
+            <TouchableOpacity style={styles.saveBtn} onPress={salvarBirthdate}>
+              <Text style={styles.saveBtnText}>Salvar Data</Text>
+            </TouchableOpacity>
+          </>
+        )}
+
         <Text style={styles.label}>Idade:</Text>
-        <View style={styles.row}>
-          <Text style={styles.value}>{userData.idade}</Text>
-          <TouchableOpacity
-            style={[styles.editButton, styles.minusButton]}
-            onPress={() => alterarIdade(-1)}
-          >
-            <Text style={styles.editButtonText}>-</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.editButton}
-            onPress={() => alterarIdade(1)}
-          >
-            <Text style={styles.editButtonText}>+</Text>
-          </TouchableOpacity>
-        </View>
+        <Text style={styles.value}>
+          {idadeCalculada ? `${idadeCalculada} anos` : "Não informada"}
+        </Text>
 
         <Text style={styles.label}>Corridas:</Text>
         <Text style={styles.value}>{userData.corridas}</Text>
@@ -350,28 +379,6 @@ const styles = StyleSheet.create({
     color: "#000",
     fontWeight: "bold",
     fontSize: 16,
-  },
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    marginVertical: 8,
-  },
-  editButton: {
-    backgroundColor: "#FFD700",
-    width: 35,
-    height: 35,
-    justifyContent: "center",
-    alignItems: "center",
-    borderRadius: 6,
-  },
-  minusButton: {
-    backgroundColor: "#FF4444",
-  },
-  editButtonText: {
-    fontSize: 18,
-    color: "#000",
-    fontWeight: "bold",
   },
   button: {
     backgroundColor: "#FFD700",
