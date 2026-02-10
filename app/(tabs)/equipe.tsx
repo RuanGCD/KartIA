@@ -177,7 +177,7 @@ export default function Equipe() {
         nome: "Minha Equipe",
         OwnerId: user.$id,
         icon: "",
-        pilotos: [],
+        pilotos: [user.$id],
         joinRequests: [],
       }
     );
@@ -346,7 +346,24 @@ const sairDaEquipe = async () => {
         </View>
       </TouchableOpacity>
 
-      <Text style={styles.teamName}>{team.nome}</Text>
+      {team.OwnerId === user?.$id ? (
+  <TextInput
+    style={styles.teamName}
+    value={team.nome}
+    onChangeText={async (text) => {
+      setTeam({ ...team, nome: text });
+
+      await databases.updateDocument(
+        DB_ID,
+        COLLECTION_ID,
+        team.$id,
+        { nome: text }
+      );
+    }}
+  />
+) : (
+  <Text style={styles.teamName}>{team.nome}</Text>
+)}
 
       <Text style={styles.section}>Pilotos</Text>
 
