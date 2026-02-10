@@ -13,3 +13,4 @@ export const storage = new Storage(client);
 // IDs
 export const DB_ID = "68f65dd60011cc69ba07";
 export const USERS_COLLECTION_ID = "users";
+export const BUCKET_ID = "698a7ed50005acb08f9a";

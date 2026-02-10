@@ -17,7 +17,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { ID, Query } from "appwrite";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { databases, DB_ID } from "../../utils/appwrite";
+import { databases, DB_ID, storage, BUCKET_ID } from "../../utils/appwrite";
 import { useAuth } from "../../Contexts/authContext";
 
 const COLLECTION_ID = "teams";
@@ -187,22 +187,74 @@ export default function Equipe() {
 
   /*  ALTERAR ÍCONE */
   const handleChangeIcon = async () => {
-    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!perm.granted) return;
+  const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+  if (!perm.granted) {
+    Alert.alert("Permissão", "Precisamos de acesso às fotos.");
+    return;
+  }
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      allowsEditing: true,
-      aspect: [1, 1],
+  const result = await ImagePicker.launchImageLibraryAsync({
+    allowsEditing: true,
+    aspect: [1, 1],
+    quality: 0.5,
+  });
+
+  if (result.canceled) return;
+
+  try {
+    setLoading(true);
+    const uri = result.assets[0].uri;
+    const extension = uri.split('.').pop() || 'jpg';
+    const fileName = `icon_${team.$id}.${extension}`;
+
+    // AQUI ESTÁ O SEGREDO: 
+    // Criamos um FormData do zero, que é como o navegador envia arquivos.
+    const formData = new FormData();
+    
+    // O Appwrite espera esses 3 campos:
+    formData.append('fileId', ID.unique());
+    formData.append('file', {
+      uri: uri,
+      name: fileName,
+      type: `image/${extension === 'png' ? 'png' : 'jpeg'}`,
+    } as any);
+
+    // Em vez de usar o storage.createFile do SDK (que está bugando),
+    // vamos usar um fetch direto para a API do Appwrite.
+    const response = await fetch(`${storage.client.config.endpoint}/storage/buckets/${BUCKET_ID}/files`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        'X-Appwrite-Project': storage.client.config.project,
+        // Se o usuário estiver logado, o Appwrite usa o cookie/sessão automaticamente
+      },
+      body: formData,
     });
 
-    if (result.canceled) return;
+    const resultData = await response.json();
 
+    if (!response.ok) {
+      throw new Error(resultData.message || 'Erro no upload');
+    }
+
+    // Se chegou aqui, o arquivo subiu! Agora pegamos a URL.
+    const imageUrl = storage.getFileView(BUCKET_ID, resultData.$id);
+
+    // Atualizamos o banco de dados
     await databases.updateDocument(DB_ID, COLLECTION_ID, team.$id, {
-      icon: result.assets[0].uri,
+      icon: imageUrl.toString(),
     });
 
-    setTeam({ ...team, icon: result.assets[0].uri });
-  };
+    setTeam({ ...team, icon: imageUrl.toString() });
+    Alert.alert("Sucesso", "Finalmente! Ícone atualizado.");
+
+  } catch (err: any) {
+    console.log("Erro detalhado:", err);
+    Alert.alert("Erro", "Ainda não foi dessa vez. Verifique o console.");
+  } finally {
+    setLoading(false);
+  }
+};
 
   /*  EXCLUIR EQUIPE */
   const handleDeleteTeam = async () => {
