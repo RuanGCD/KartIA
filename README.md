@@ -1,50 +1,113 @@
-# Welcome to your Expo app 👋
+# 🏎️ KartIA
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Aplicativo mobile para gerenciamento e acompanhamento de campeonatos
+de kart entre amigos.
 
-## Get started
+O KartIA permite criar campeonatos, registrar resultados de corridas,
+acompanhar pontuação, formar equipes e acompanhar a evolução do piloto
+através de gráficos e registros pessoais.
 
-1. Install dependencies
+## 🎯 Sobre o projeto
 
-   ```bash
-   npm install
-   ```
+O KartIA foi desenvolvido para centralizar a organização de campeonatos
+de kart entre amigos e facilitar o acompanhamento do desempenho dos
+pilotos ao longo das corridas.
 
-2. Start the app
+Cada usuário possui sua própria conta e pode participar de campeonatos
+através de códigos de convite.
 
-   ```bash
-   npx expo start
-   ```
+## ✨ Funcionalidades
 
-In the output, you'll find options to open the app in a
+### 🏆 Campeonatos
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+- Criação de campeonatos
+- Entrada em campeonatos através de código
+- Gerenciamento do campeonato pelo proprietário
+- Registro dos resultados das corridas
+- Registro das posições dos pilotos
+- Cálculo automático da pontuação
+- Distribuição da pontuação entre os participantes
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+### 📈 Evolução do piloto
 
-## Get a fresh project
+- Registro da melhor volta de cada corrida
+- Gráfico de evolução dos tempos
+- Acompanhamento do desempenho ao longo do campeonato
 
-When you're ready, run:
+### 📝 Anotações
 
-```bash
-npm run reset-project
-```
+Área pessoal para registrar informações relacionadas às corridas,
+como:
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+- Características das pistas
+- Estratégias
+- Pontos a melhorar
+- Observações sobre corridas anteriores
 
-## Learn more
+### 🎥 Vídeos
 
-To learn more about developing your project with Expo, look at the following resources:
+Área para armazenar vídeos relacionados às corridas e ao desempenho
+do piloto.
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+### 👥 Equipes
 
-## Join the community
+- Participação em equipes
+- Organização de amigos em equipes
+- Acompanhamento dos participantes da equipe
 
-Join our community of developers creating universal apps.
+### 👤 Perfil
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+- Perfil do usuário
+- Foto de perfil armazenada localmente no dispositivo
+
+## 🛠️ Tecnologias
+
+- React Native
+- Expo
+- JavaScript
+- Appwrite
+
+## 📱 Arquitetura
+
+O aplicativo foi desenvolvido utilizando React Native com Expo,
+enquanto o Appwrite é utilizado como backend da aplicação.
+
+Aplicativo Mobile
+       │
+       ▼
+  React Native
+       │
+       ▼
+     Expo
+       │
+       ▼
+    Appwrite
+       │
+       ▼
+Banco de dados
+
+🚧 Status do projeto
+
+O projeto encontra-se fora da publicação pública no momento.
+
+Atualmente, o acesso é restrito a usuários previamente cadastrados,
+pois o aplicativo ainda precisa de uma quantidade maior de usuários
+para realização de testes.
+
+🧪 Interesse em testar
+
+Caso tenha interesse em testar o KartIA, entre em contato para solicitar
+acesso e realizar o cadastro como usuário de teste.
+
+contato: rl.studios.dev@gmail.com
+
+📚 Objetivo do projeto
+
+O KartIA foi desenvolvido como um projeto prático para aplicar conceitos
+de desenvolvimento mobile e construção de uma aplicação completa,
+envolvendo autenticação, persistência de dados, gerenciamento de
+campeonatos e visualização de informações.
+
+O projeto também foi desenvolvido com o objetivo de criar uma ferramenta
+real para organização e acompanhamento de campeonatos de kart entre
+amigos.
